@@ -428,6 +428,38 @@
 </head>
 <body>
 
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="api-modal">
+    <div class="modal-box">
+        <h1>GHOST_PROTOCOL</h1>
+        <div class="subtitle">DUCHENNE EMOTIONAL ANALYSIS SYSTEM</div>
+        
+        <p>
+            This system uses MediaPipe for real-time facial landmark detection.
+            For enhanced AI analysis, enter your Mistral API key below.
+        </p>
+        
+        <input type="password" class="api-input-large" id="modal-api-key" 
+               placeholder="ENTER MISTRAL API KEY">
+        
+        <div>
+            <button class="btn-primary" onclick="submitApiKey()">
+                INITIALIZE WITH AI
+            </button>
+        </div>
+        <div>
+            <button class="btn-secondary" onclick="skipApiKey()">
+                CONTINUE WITHOUT AI (MediaPipe Only)
+            </button>
+        </div>
+        
+        <div class="info">
+            Get your API key from <a href="https://console.mistral.ai/" target="_blank">console.mistral.ai</a><br>
+            Your key is stored locally and never sent to any server except Mistral's API.
+        </div>
+    </div>
+</div>
+
 <div class="surveillance-container">
     <div id="loading">INITIALIZING DUCHENNE ALGORITHMS...</div>
 
