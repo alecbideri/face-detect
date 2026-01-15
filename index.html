@@ -418,6 +418,52 @@
         .modal-box .info a:hover {
             text-decoration: underline;
         }
+
+        /* API Key Needed Modal - Cyan accent */
+        .modal-box.api-needed {
+            border-color: #0ff;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.05);
+        }
+        .modal-box.api-needed h1 {
+            color: #0ff;
+        }
+        .modal-box .btn-cyan {
+            background: linear-gradient(180deg, #0ff, #088);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .modal-box .btn-cyan:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: scale(1.02);
+        }
+        .modal-box .api-input-inline {
+            width: calc(100% - 24px);
+            background: #000;
+            border: 1px solid #004444;
+            color: #0ff;
+            padding: 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .modal-box .api-input-inline:focus {
+            outline: none;
+            border-color: #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
     </style>
 
     <!-- MediaPipe -->
@@ -454,8 +500,45 @@
         </div>
         
         <div class="info">
-            Get your API key from <a href="https://console.mistral.ai/" target="_blank">console.mistral.ai</a><br>
+            Get your API key from <a href="https://console.mistral.ai/home" target="_blank">console.mistral.ai</a><br>
             Your key is stored locally and never sent to any server except Mistral's API.
+        </div>
+    </div>
+</div>
+
+<!-- API KEY NEEDED MODAL -->
+<div class="modal-overlay hidden" id="api-needed-modal">
+    <div class="modal-box api-needed">
+        <h1>🔑 API KEY REQUIRED</h1>
+        <div class="subtitle">MISTRAL AI ENHANCEMENT</div>
+        
+        <p>
+            To use Mistral AI for enhanced emotional analysis, you need an API key.
+            Sign up for free at Mistral AI to get your key.
+        </p>
+        
+        <div>
+            <a href="https://console.mistral.ai/home" target="_blank" class="btn-cyan">
+                GET MISTRAL API KEY →
+            </a>
+        </div>
+        
+        <p style="margin-top: 20px; color: #666;">
+            Already have a key? Enter it below:
+        </p>
+        
+        <input type="password" class="api-input-inline" id="inline-api-key" 
+               placeholder="PASTE YOUR API KEY HERE">
+        
+        <div>
+            <button class="btn-primary" onclick="saveInlineApiKey()">
+                SAVE & ENABLE AI
+            </button>
+        </div>
+        <div>
+            <button class="btn-secondary" onclick="closeApiNeededModal()">
+                CONTINUE WITHOUT AI
+            </button>
         </div>
     </div>
 </div>
@@ -628,6 +711,75 @@
     let lastUIUpdate = 0;
     const UI_UPDATE_INTERVAL = 50; // Update UI every 50ms (20fps)
 
+    // --- MODAL CONTROL ---
+    function checkApiKeyOnLoad() {
+        const savedKey = localStorage.getItem('mistral_api_key');
+        if (savedKey && savedKey.length > 10) {
+            // Key exists, hide modal and start
+            hideModal();
+            document.getElementById('mistral-api').value = savedKey;
+            document.getElementById('mistral-toggle').checked = true;
+        }
+        // If no key, modal stays visible
+    }
+
+    function submitApiKey() {
+        const key = document.getElementById('modal-api-key').value.trim();
+        if (key.length > 10) {
+            localStorage.setItem('mistral_api_key', key);
+            document.getElementById('mistral-api').value = key;
+            document.getElementById('mistral-toggle').checked = true;
+            hideModal();
+        } else {
+            alert('Please enter a valid API key or click "Continue Without AI"');
+        }
+    }
+
+    function skipApiKey() {
+        hideModal();
+        document.getElementById('mistral-toggle').checked = false;
+    }
+
+    function hideModal() {
+        document.getElementById('api-modal').classList.add('hidden');
+    }
+
+    // --- API KEY NEEDED MODAL ---
+    function showApiNeededModal() {
+        document.getElementById('api-needed-modal').classList.remove('hidden');
+    }
+
+    function closeApiNeededModal() {
+        document.getElementById('api-needed-modal').classList.add('hidden');
+        document.getElementById('mistral-toggle').checked = false;
+    }
+
+    function saveInlineApiKey() {
+        const key = document.getElementById('inline-api-key').value.trim();
+        if (key.length > 10) {
+            localStorage.setItem('mistral_api_key', key);
+            document.getElementById('mistral-api').value = key;
+            document.getElementById('mistral-toggle').checked = true;
+            document.getElementById('api-needed-modal').classList.add('hidden');
+        } else {
+            alert('Please enter a valid API key');
+        }
+    }
+
+    function checkApiKeyForAssessment() {
+        const useMistral = document.getElementById('mistral-toggle').checked;
+        const apiKey = document.getElementById('mistral-api').value;
+        
+        if (useMistral && (!apiKey || apiKey.length < 10)) {
+            showApiNeededModal();
+            return false;
+        }
+        return true;
+    }
+
+    // Check on load
+    checkApiKeyOnLoad();
+
     // --- LOAD SAVED API KEY ---
     const savedApiKey = localStorage.getItem('mistral_api_key');
     if (savedApiKey) {
@@ -656,6 +808,17 @@
         localStorage.setItem('mistral_api_key', e.target.value);
     });
 
+    // Check API key when enabling Mistral toggle
+    document.getElementById('mistral-toggle').addEventListener('change', (e) => {
+        if (e.target.checked) {
+            const apiKey = document.getElementById('mistral-api').value;
+            if (!apiKey || apiKey.length < 10) {
+                e.target.checked = false;
+                showApiNeededModal();
+            }
+        }
+    });
+
     function resetWeights() {
         Object.keys(weights).forEach(k => {
             weights[k] = 1.0;
@@ -665,7 +828,11 @@
     }
 
     // --- ASSESSMENT CONTROLS ---
-    document.getElementById('btn-start-assess').addEventListener('click', startAssessment);
+    document.getElementById('btn-start-assess').addEventListener('click', () => {
+        // Check API key if Mistral is enabled
+        if (!checkApiKeyForAssessment()) return;
+        startAssessment();
+    });
 
     async function startAssessment() {
         if (isAssessing) return;
@@ -713,7 +880,16 @@
         btn.textContent = '▶ START ASSESSMENT (5s)';
         btn.disabled = false;
         progressBar.style.display = 'none';
-        status.textContent = 'Processing results...';
+
+        // Check if we captured any data
+        if (assessmentData.length === 0) {
+            status.textContent = '⚠ NO FACE DETECTED - Please ensure face is visible';
+            status.style.color = '#f00';
+            return;
+        }
+
+        status.textContent = `Processing ${assessmentData.length} samples...`;
+        status.style.color = '#888';
 
         // Calculate MediaPipe results
         const mediapipeResults = calculateAssessmentResults();
@@ -723,15 +899,21 @@
         const apiKey = document.getElementById('mistral-api').value;
 
         let mistralResults = null;
-        if (useMistral && apiKey && capturedFrames.length > 0) {
+        if (useMistral && apiKey && apiKey.length > 10 && capturedFrames.length > 0) {
             status.textContent = 'Querying Mistral AI...';
-            mistralResults = await getMistralAnalysis(apiKey, capturedFrames[Math.floor(capturedFrames.length / 2)]);
+            try {
+                mistralResults = await getMistralAnalysis(apiKey, capturedFrames[Math.floor(capturedFrames.length / 2)]);
+            } catch (err) {
+                console.error('Mistral error:', err);
+                mistralResults = { error: err.message };
+            }
         }
 
         // Display results
         displayAssessmentResults(mediapipeResults, mistralResults);
         results.style.display = 'block';
-        status.textContent = 'Assessment complete';
+        status.textContent = `✓ Assessment complete (${assessmentData.length} samples)`;
+        status.style.color = '#0f0';
 
         lastAssessmentResult = {
             timestamp: new Date().toISOString(),
